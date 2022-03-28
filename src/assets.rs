@@ -6,8 +6,8 @@ struct Backgrounds(HashMap<String, Handle<Image>>);
 
 //--Sprites--//
 
-pub type FlySprite = Handle<Image>;
-pub type CatcherSprite = Handle<Image>;
+pub struct FlySprite(pub Handle<Image>);
+pub struct CatcherSprite(pub Handle<Image>);
 
 pub struct AssetPlugin;
 
@@ -21,11 +21,11 @@ impl Plugin for AssetPlugin {
 }
 
 fn load_sprites(mut commands: Commands, asset_loader: ResMut<AssetServer>) {
-    let fly_handle: FlySprite = asset_loader.load("sprites/FlyPlaceholder.png");
-    let catcher_handle: CatcherSprite = asset_loader.load("sprites/GrabberPlaceholder.png");
+    let fly_handle = FlySprite(asset_loader.load("sprites/FlyPlaceholder.png"));
+    let catcher_handle = CatcherSprite(asset_loader.load("sprites/GrabberPlaceholder.png"));
 
-    commands.insert_resource(fly_handle);
     commands.insert_resource(catcher_handle);
+    commands.insert_resource(fly_handle);
 }
 
 fn load_sounds() {}

@@ -2,6 +2,7 @@ use crate::assets::{CatcherSprite, FlySprite};
 use crate::input::MousePos;
 use crate::PHYS_SCALE;
 use bevy::prelude::*;
+use rand::random;
 
 use super::GameState;
 
@@ -13,7 +14,7 @@ static GRABBER_SCALE: f32 = 4.0;
 pub fn init(mut commands: Commands, catcher_sprite: Res<CatcherSprite>) {
     commands
         .spawn_bundle(SpriteBundle {
-            texture: catcher_sprite.clone(),
+            texture: catcher_sprite.0.clone(),
             transform: Transform::default().with_scale(Vec3::splat(GRABBER_SCALE)),
             ..Default::default()
         })
@@ -22,7 +23,9 @@ pub fn init(mut commands: Commands, catcher_sprite: Res<CatcherSprite>) {
 
 //put input handling and actual gameplay stuff here
 pub fn update_set(state: GameState) -> SystemSet {
-    SystemSet::on_update(state).with_system(grabber_movement)
+    SystemSet::on_update(state)
+        .with_system(grabber_movement)
+        .with_system(spawn_flies)
 }
 
 //despawn relevant entities here
@@ -38,4 +41,23 @@ fn grabber_movement(mut grabber_q: Query<&mut Transform, With<Grabber>>, m_pos: 
     info!("Cursor pos {:?}", m_pos);
 }
 
-fn spawn_flies(mut commands: Commands, fly_sprite: Res<FlySprite>) {}
+fn spawn_flies(
+    mut commands: Commands,
+    fly_sprite: Res<FlySprite>,
+    mut elapsed: Local<f32>,
+    time: Res<Time>,
+) {
+    *elapsed += time.delta_seconds();
+
+    if *elapsed >= 3.0 {
+        commands.spawn_bundle(SpriteBundle {
+            texture: fly_sprite.0.clone(),
+            transform: Transform::from_translation(
+                Vec2::splat(*elapsed * random::<f32>()).extend(0.0),
+            )
+            .with_scale(Vec3::splat(3.0)),
+            ..Default::default()
+        });
+        *elapsed = 0.0;
+    }
+}
