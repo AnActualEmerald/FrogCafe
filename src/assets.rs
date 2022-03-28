@@ -4,6 +4,11 @@ use std::collections::HashMap;
 #[derive(Default)]
 struct Backgrounds(HashMap<String, Handle<Image>>);
 
+//--Sprites--//
+
+pub type FlySprite = Handle<Image>;
+pub type CatcherSprite = Handle<Image>;
+
 pub struct AssetPlugin;
 
 impl Plugin for AssetPlugin {
@@ -15,7 +20,13 @@ impl Plugin for AssetPlugin {
     }
 }
 
-fn load_sprites() {}
+fn load_sprites(mut commands: Commands, asset_loader: ResMut<AssetServer>) {
+    let fly_handle: FlySprite = asset_loader.load("sprites/FlyPlaceholder.png");
+    let catcher_handle: CatcherSprite = asset_loader.load("sprites/CatcherPlaceholder.png");
+
+    commands.insert_resource(fly_handle);
+    commands.insert_resource(catcher_handle);
+}
 
 fn load_sounds() {}
 
