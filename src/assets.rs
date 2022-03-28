@@ -22,7 +22,7 @@ impl Plugin for AssetPlugin {
 
 fn load_sprites(mut commands: Commands, asset_loader: ResMut<AssetServer>) {
     let fly_handle: FlySprite = asset_loader.load("sprites/FlyPlaceholder.png");
-    let catcher_handle: CatcherSprite = asset_loader.load("sprites/CatcherPlaceholder.png");
+    let catcher_handle: CatcherSprite = asset_loader.load("sprites/GrabberPlaceholder.png");
 
     commands.insert_resource(fly_handle);
     commands.insert_resource(catcher_handle);
