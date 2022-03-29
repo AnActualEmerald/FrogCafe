@@ -1,28 +1,35 @@
-use crate::assets::{CatcherSprite, FlySprite};
+use crate::assets::Sprites;
 use crate::input::MousePos;
-use crate::PHYS_SCALE;
 use bevy::prelude::*;
+use heron::prelude::*;
 
-use super::GameState;
+use super::{behavior::*, GameState};
 
 #[derive(Component)]
 struct Grabber;
 
+struct FlyTimer(Timer);
+
 static GRABBER_SCALE: f32 = 4.0;
 
-pub fn init(mut commands: Commands, catcher_sprite: Res<CatcherSprite>) {
+pub fn init(mut commands: Commands, sprites: Res<Sprites>) {
     commands
         .spawn_bundle(SpriteBundle {
-            texture: catcher_sprite.clone(),
+            texture: sprites.grabber.clone(),
             transform: Transform::default().with_scale(Vec3::splat(GRABBER_SCALE)),
             ..Default::default()
         })
         .insert(Grabber);
+
+    commands.insert_resource(FlyTimer(Timer::from_seconds(3.0, true)));
 }
 
 //put input handling and actual gameplay stuff here
 pub fn update_set(state: GameState) -> SystemSet {
-    SystemSet::on_update(state).with_system(grabber_movement)
+    SystemSet::on_update(state)
+        .with_system(grabber_movement)
+        .with_system(fly_behavior)
+        .with_system(spawn_flies)
 }
 
 //despawn relevant entities here
@@ -38,4 +45,21 @@ fn grabber_movement(mut grabber_q: Query<&mut Transform, With<Grabber>>, m_pos: 
     info!("Cursor pos {:?}", m_pos);
 }
 
-fn spawn_flies(mut commands: Commands, fly_sprite: Res<FlySprite>) {}
+fn spawn_flies(
+    mut commands: Commands,
+    sprites: Res<Sprites>,
+    mut timer: ResMut<FlyTimer>,
+    time: Res<Time>,
+) {
+    if timer.0.tick(time.delta()).just_finished() {
+        commands
+            .spawn_bundle(SpriteBundle {
+                texture: sprites.fly.clone(),
+                ..Default::default()
+            })
+            .insert(Fly)
+            .insert(RigidBody::Dynamic)
+            .insert(CollisionShape::Sphere { radius: 8. })
+            .insert(Velocity::from_linear(Vec3::default()));
+    }
+}

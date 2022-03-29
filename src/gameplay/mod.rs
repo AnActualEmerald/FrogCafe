@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 
+mod behavior;
 mod catching;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
