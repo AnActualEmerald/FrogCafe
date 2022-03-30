@@ -1,33 +1,31 @@
+use crate::AppState;
 use bevy::prelude::*;
+use bevy_asset_loader::{AssetCollection, AssetLoader};
 use std::collections::HashMap;
 
-#[derive(Default)]
-struct Backgrounds(HashMap<String, Handle<Image>>);
+#[derive(AssetCollection)]
+pub struct Sprites {
+    #[asset(path = "sprites/FlyPlaceholder.png")]
+    pub fly: Handle<Image>,
+    #[asset(path = "sprites/GrabberPlaceholder.png")]
+    pub grabber: Handle<Image>,
+}
 
-//--Sprites--//
+#[derive(AssetCollection)]
+pub struct Backgrounds {}
 
-pub struct FlySprite(pub Handle<Image>);
-pub struct CatcherSprite(pub Handle<Image>);
+#[derive(AssetCollection)]
+pub struct Sounds {}
 
 pub struct AssetPlugin;
 
 impl Plugin for AssetPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<Backgrounds>()
-            .add_startup_system(load_sprites)
-            .add_startup_system(load_backgrounds)
-            .add_startup_system(load_sounds);
+        AssetLoader::new(AppState::Loading)
+            .continue_to_state(AppState::Game)
+            .with_collection::<Sprites>()
+            .with_collection::<Backgrounds>()
+            .with_collection::<Sounds>()
+            .build(app);
     }
 }
-
-fn load_sprites(mut commands: Commands, asset_loader: ResMut<AssetServer>) {
-    let fly_handle = FlySprite(asset_loader.load("sprites/FlyPlaceholder.png"));
-    let catcher_handle = CatcherSprite(asset_loader.load("sprites/GrabberPlaceholder.png"));
-
-    commands.insert_resource(catcher_handle);
-    commands.insert_resource(fly_handle);
-}
-
-fn load_sounds() {}
-
-fn load_backgrounds() {}

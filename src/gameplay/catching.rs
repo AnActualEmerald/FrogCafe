@@ -1,30 +1,85 @@
-use crate::assets::{CatcherSprite, FlySprite};
+use crate::assets::Sprites;
 use crate::input::MousePos;
-use crate::PHYS_SCALE;
 use bevy::prelude::*;
-use rand::random;
+use heron::prelude::*;
 
-use super::GameState;
+use super::{behavior::*, GameState};
 
 #[derive(Component)]
 struct Grabber;
 
-static GRABBER_SCALE: f32 = 4.0;
+struct FlyTimer(Timer);
 
-pub fn init(mut commands: Commands, catcher_sprite: Res<CatcherSprite>) {
+const GRABBER_SCALE: f32 = 4.0;
+
+#[derive(Bundle)]
+struct FlyBundle {
+    #[bundle]
+    sprite_bundle: SpriteBundle,
+    fly_marker: Fly,
+    rigid_body: RigidBody,
+    collider: CollisionShape,
+    vel: Velocity,
+}
+
+impl FlyBundle {
+    fn new(sprite: Handle<Image>, rad: f32, starting_pos: Vec2, starting_vel: Vec2) -> Self {
+        FlyBundle {
+            sprite_bundle: SpriteBundle {
+                texture: sprite,
+                transform: Transform::from_translation(starting_pos.extend(0.)),
+                ..Default::default()
+            },
+            fly_marker: Fly,
+            rigid_body: RigidBody::Dynamic,
+            collider: CollisionShape::Sphere { radius: rad },
+            vel: Velocity::from_linear(starting_vel.extend(0.)),
+        }
+    }
+}
+
+pub fn init(mut commands: Commands, sprites: Res<Sprites>, windows: Res<Windows>) {
     commands
         .spawn_bundle(SpriteBundle {
-            texture: catcher_sprite.0.clone(),
+            texture: sprites.grabber.clone(),
             transform: Transform::default().with_scale(Vec3::splat(GRABBER_SCALE)),
             ..Default::default()
         })
         .insert(Grabber);
+
+    commands.insert_resource(FlyTimer(Timer::from_seconds(3.0, true)));
+
+    //spawn a floor
+    let w = windows.get_primary().unwrap();
+    commands
+        .spawn_bundle(SpriteBundle {
+            transform: Transform::from_translation(Vec3::new(0., -(w.height() / 2.) - 6., 0.)),
+            ..Default::default()
+        })
+        .insert(RigidBody::Static)
+        .insert(CollisionShape::Cuboid {
+            half_extends: Vec3::new(w.width() / 2., 5., 0.),
+            border_radius: None,
+        });
+
+    let mut flies = Vec::with_capacity(30);
+    for _ in 0..flies.capacity() {
+        flies.push(FlyBundle::new(
+            sprites.fly.clone(),
+            8.,
+            Vec2::new(-(w.width() / 2.) + 100., -(w.height() / 2.) + 10.),
+            Vec2::new(100., 100.),
+        ));
+    }
+
+    commands.spawn_batch(flies);
 }
 
 //put input handling and actual gameplay stuff here
 pub fn update_set(state: GameState) -> SystemSet {
     SystemSet::on_update(state)
         .with_system(grabber_movement)
+        .with_system(fly_behavior)
         .with_system(spawn_flies)
 }
 
@@ -43,21 +98,16 @@ fn grabber_movement(mut grabber_q: Query<&mut Transform, With<Grabber>>, m_pos: 
 
 fn spawn_flies(
     mut commands: Commands,
-    fly_sprite: Res<FlySprite>,
-    mut elapsed: Local<f32>,
+    sprites: Res<Sprites>,
+    mut timer: ResMut<FlyTimer>,
     time: Res<Time>,
 ) {
-    *elapsed += time.delta_seconds();
-
-    if *elapsed >= 3.0 {
-        commands.spawn_bundle(SpriteBundle {
-            texture: fly_sprite.0.clone(),
-            transform: Transform::from_translation(
-                Vec2::splat(*elapsed * random::<f32>()).extend(0.0),
-            )
-            .with_scale(Vec3::splat(3.0)),
-            ..Default::default()
-        });
-        *elapsed = 0.0;
+    if timer.0.tick(time.delta()).just_finished() {
+        commands.spawn_bundle(FlyBundle::new(
+            sprites.fly.clone(),
+            8.,
+            Vec2::new(0., -(720. / 2.) + 10.),
+            Vec2::new(0., 100.),
+        ));
     }
 }

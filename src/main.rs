@@ -1,4 +1,5 @@
-use bevy::{ecs::system::ResMutState, prelude::*};
+use bevy::prelude::*;
+use heron::prelude::PhysicsPlugin;
 // use bevy::window::WindowMode;
 
 #[allow(unused)]
@@ -25,20 +26,20 @@ fn main() {
         //TODO: Read/write window config to disk
         .insert_resource(WindowDescriptor {
             title: "Toadally Tacos".to_string(),
-            // width: 1280.0,
-            // height: 720.0,
-            cursor_locked: true,
-            resizable: false,
+            width: 1280.0,
+            height: 720.0,
+            // cursor_locked: true,
             ..Default::default()
         })
-        .insert_resource(ClearColor(Color::BLACK))
+        .insert_resource(ClearColor(Color::WHITE))
         .add_state(AppState::Loading)
         .add_system_set(SystemSet::on_enter(AppState::Game).with_system(start_game))
-        .add_system_set(SystemSet::on_update(AppState::Loading).with_system(done_loading))
+        // .add_system_set(SystemSet::on_update(AppState::Loading).with_system(done_loading))
         .add_plugin(assets::AssetPlugin)
         .add_plugin(input::InputPlugin)
         .add_plugin(gameplay::GameplayPlugin)
         .add_plugins(DefaultPlugins)
+        .add_plugin(PhysicsPlugin::default())
         .add_startup_system(setup)
         .run();
 }
