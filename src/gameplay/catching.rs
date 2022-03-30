@@ -10,7 +10,7 @@ struct Grabber;
 
 struct FlyTimer(Timer);
 
-const GRABBER_SCALE: f32 = 4.0;
+const GRABBER_SCALE: f32 = 2.0;
 
 #[derive(Bundle)]
 struct FlyBundle {
@@ -53,21 +53,53 @@ pub fn init(mut commands: Commands, sprites: Res<Sprites>, windows: Res<Windows>
     let w = windows.get_primary().unwrap();
     commands
         .spawn_bundle(SpriteBundle {
-            transform: Transform::from_translation(Vec3::new(0., -(w.height() / 2.) - 6., 0.)),
+            transform: Transform::from_translation(Vec3::new(0., -(720. / 2.) - 6., 0.)),
             ..Default::default()
         })
         .insert(RigidBody::Static)
         .insert(CollisionShape::Cuboid {
-            half_extends: Vec3::new(w.width() / 2., 5., 0.),
+            half_extends: Vec3::new(1280. / 2., 5., 0.),
+            border_radius: None,
+        });
+    commands
+        .spawn_bundle(SpriteBundle {
+            transform: Transform::from_translation(Vec3::new(0., (720. / 2.) + 6., 0.)),
+            ..Default::default()
+        })
+        .insert(RigidBody::Static)
+        .insert(CollisionShape::Cuboid {
+            half_extends: Vec3::new(1280. / 2., 5., 0.),
             border_radius: None,
         });
 
-    let mut flies = Vec::with_capacity(30);
+    //spawn a wall
+    commands
+        .spawn_bundle(SpriteBundle {
+            transform: Transform::from_translation(Vec3::new(-(1280. / 2.) - 6., 0., 0.)),
+            ..Default::default()
+        })
+        .insert(RigidBody::Static)
+        .insert(CollisionShape::Cuboid {
+            half_extends: Vec3::new(5., 720. / 2., 0.),
+            border_radius: None,
+        });
+    commands
+        .spawn_bundle(SpriteBundle {
+            transform: Transform::from_translation(Vec3::new((1280. / 2.) + 6., 0., 0.)),
+            ..Default::default()
+        })
+        .insert(RigidBody::Static)
+        .insert(CollisionShape::Cuboid {
+            half_extends: Vec3::new(5., 720. / 2., 0.),
+            border_radius: None,
+        });
+
+    let mut flies = Vec::with_capacity(50);
     for _ in 0..flies.capacity() {
         flies.push(FlyBundle::new(
             sprites.fly.clone(),
             8.,
-            Vec2::new(-(w.width() / 2.) + 100., -(w.height() / 2.) + 10.),
+            Vec2::new(-(1280. / 2.) + 100., -(720. / 2.) + 10.),
             Vec2::new(100., 100.),
         ));
     }
@@ -93,7 +125,6 @@ fn grabber_movement(mut grabber_q: Query<&mut Transform, With<Grabber>>, m_pos: 
     let grabber_translation = &mut grabber_q.single_mut().translation;
     grabber_translation.x = m_pos.x;
     grabber_translation.y = m_pos.y;
-    info!("Cursor pos {:?}", m_pos);
 }
 
 fn spawn_flies(
@@ -106,8 +137,8 @@ fn spawn_flies(
         commands.spawn_bundle(FlyBundle::new(
             sprites.fly.clone(),
             8.,
-            Vec2::new(0., -(720. / 2.) + 10.),
-            Vec2::new(0., 100.),
+            Vec2::new(-(1280. / 2.) + 100., -(720. / 2.) + 10.),
+            Vec2::new(100., 100.),
         ));
     }
 }
