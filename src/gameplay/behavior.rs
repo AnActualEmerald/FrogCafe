@@ -14,6 +14,6 @@ pub fn fly_behavior(mut q: Query<&mut Velocity, With<Fly>>) {
 
         tr.linear.x += diff_x * scale;
         tr.linear.y += diff_y * scale;
-        tr.linear = tr.linear.clamp(Vec3::splat(-50.), Vec3::splat(50.));
+        tr.linear = tr.linear.clamp(Vec3::splat(-100.), Vec3::splat(100.));
     }
 }

@@ -10,9 +10,35 @@ struct Grabber;
 
 struct FlyTimer(Timer);
 
-static GRABBER_SCALE: f32 = 4.0;
+const GRABBER_SCALE: f32 = 4.0;
 
-pub fn init(mut commands: Commands, sprites: Res<Sprites>) {
+#[derive(Bundle)]
+struct FlyBundle {
+    #[bundle]
+    sprite_bundle: SpriteBundle,
+    fly_marker: Fly,
+    rigid_body: RigidBody,
+    collider: CollisionShape,
+    vel: Velocity,
+}
+
+impl FlyBundle {
+    fn new(sprite: Handle<Image>, rad: f32, starting_pos: Vec2, starting_vel: Vec2) -> Self {
+        FlyBundle {
+            sprite_bundle: SpriteBundle {
+                texture: sprite,
+                transform: Transform::from_translation(starting_pos.extend(0.)),
+                ..Default::default()
+            },
+            fly_marker: Fly,
+            rigid_body: RigidBody::Dynamic,
+            collider: CollisionShape::Sphere { radius: rad },
+            vel: Velocity::from_linear(starting_vel.extend(0.)),
+        }
+    }
+}
+
+pub fn init(mut commands: Commands, sprites: Res<Sprites>, windows: Res<Windows>) {
     commands
         .spawn_bundle(SpriteBundle {
             texture: sprites.grabber.clone(),
@@ -22,6 +48,31 @@ pub fn init(mut commands: Commands, sprites: Res<Sprites>) {
         .insert(Grabber);
 
     commands.insert_resource(FlyTimer(Timer::from_seconds(3.0, true)));
+
+    //spawn a floor
+    let w = windows.get_primary().unwrap();
+    commands
+        .spawn_bundle(SpriteBundle {
+            transform: Transform::from_translation(Vec3::new(0., -(w.height() / 2.) - 6., 0.)),
+            ..Default::default()
+        })
+        .insert(RigidBody::Static)
+        .insert(CollisionShape::Cuboid {
+            half_extends: Vec3::new(w.width() / 2., 5., 0.),
+            border_radius: None,
+        });
+
+    let mut flies = Vec::with_capacity(30);
+    for _ in 0..flies.capacity() {
+        flies.push(FlyBundle::new(
+            sprites.fly.clone(),
+            8.,
+            Vec2::new(-(w.width() / 2.) + 100., -(w.height() / 2.) + 10.),
+            Vec2::new(100., 100.),
+        ));
+    }
+
+    commands.spawn_batch(flies);
 }
 
 //put input handling and actual gameplay stuff here
@@ -52,14 +103,11 @@ fn spawn_flies(
     time: Res<Time>,
 ) {
     if timer.0.tick(time.delta()).just_finished() {
-        commands
-            .spawn_bundle(SpriteBundle {
-                texture: sprites.fly.clone(),
-                ..Default::default()
-            })
-            .insert(Fly)
-            .insert(RigidBody::Dynamic)
-            .insert(CollisionShape::Sphere { radius: 8. })
-            .insert(Velocity::from_linear(Vec3::default()));
+        commands.spawn_bundle(FlyBundle::new(
+            sprites.fly.clone(),
+            8.,
+            Vec2::new(0., -(720. / 2.) + 10.),
+            Vec2::new(0., 100.),
+        ));
     }
 }
