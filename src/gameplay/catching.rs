@@ -6,9 +6,10 @@ use std::f32::consts::PI;
 
 use super::{behavior::*, GameState};
 
-#[derive(Component)]
+#[derive(Component, Default)]
 struct Grabber {
     grab_point: Vec2,
+    grabbed: Option<Entity>,
 }
 
 struct FlyTimer(Timer);
@@ -41,7 +42,7 @@ impl FlyBundle {
     }
 }
 
-pub fn init(mut commands: Commands, sprites: Res<Sprites>, windows: Res<Windows>) {
+pub fn init(mut commands: Commands, sprites: Res<Sprites>) {
     commands
         .spawn_bundle(SpriteBundle {
             texture: sprites.grabber.clone(),
@@ -51,7 +52,8 @@ pub fn init(mut commands: Commands, sprites: Res<Sprites>, windows: Res<Windows>
         })
         .insert(RigidBody::Sensor)
         .insert(Grabber {
-            grab_point: Vec2::new(32., 64.),
+            grab_point: Vec2::new(0., 32. - 6.),
+            grabbed: None,
         })
         .with_children(|parent| {
             parent.spawn_bundle((
@@ -67,10 +69,9 @@ pub fn init(mut commands: Commands, sprites: Res<Sprites>, windows: Res<Windows>
     commands.insert_resource(FlyTimer(Timer::from_seconds(3.0, true)));
 
     //spawn a floor
-    let w = windows.get_primary().unwrap();
     commands
         .spawn_bundle(SpriteBundle {
-            transform: Transform::from_translation(Vec3::new(0., -(720. / 2.) - 6., 0.)),
+            transform: Transform::from_translation(Vec3::new(0., -(720. / 2.) - 5., 0.)),
             ..Default::default()
         })
         .insert(RigidBody::Static)
@@ -80,7 +81,7 @@ pub fn init(mut commands: Commands, sprites: Res<Sprites>, windows: Res<Windows>
         });
     commands
         .spawn_bundle(SpriteBundle {
-            transform: Transform::from_translation(Vec3::new(0., (720. / 2.) + 6., 0.)),
+            transform: Transform::from_translation(Vec3::new(0., (720. / 2.) + 5., 0.)),
             ..Default::default()
         })
         .insert(RigidBody::Static)
@@ -92,7 +93,7 @@ pub fn init(mut commands: Commands, sprites: Res<Sprites>, windows: Res<Windows>
     //spawn a wall
     commands
         .spawn_bundle(SpriteBundle {
-            transform: Transform::from_translation(Vec3::new(-(1280. / 2.) - 6., 0., 0.)),
+            transform: Transform::from_translation(Vec3::new(-(1280. / 2.) - 5., 0., 0.)),
             ..Default::default()
         })
         .insert(RigidBody::Static)
@@ -102,7 +103,7 @@ pub fn init(mut commands: Commands, sprites: Res<Sprites>, windows: Res<Windows>
         });
     commands
         .spawn_bundle(SpriteBundle {
-            transform: Transform::from_translation(Vec3::new((1280. / 2.) + 6., 0., 0.)),
+            transform: Transform::from_translation(Vec3::new((1280. / 2.) + 5., 0., 0.)),
             ..Default::default()
         })
         .insert(RigidBody::Static)
@@ -157,5 +158,30 @@ fn spawn_flies(
             Vec2::new(-(1280. / 2.) + 100., -(720. / 2.) + 10.),
             Vec2::new(100., 100.),
         ));
+    }
+}
+
+fn handle_sensors(
+    mut commands: Commands,
+    mut col_events: EventReader<CollisionEvent>,
+    grabber_q: Query<Entity, With<Grabber>>,
+) {
+    let grabber = grabber_q.single();
+    for ev in col_events.iter() {
+        match ev {
+            CollisionEvent::Started(col_a, col_b) => {
+                if col_a.rigid_body_entity() == grabber {
+                    commands
+                        .entity(col_b.rigid_body_entity())
+                        .despawn_recursive();
+                } else if col_b.rigid_body_entity() == grabber {
+                    commands
+                        .entity(col_a.rigid_body_entity())
+                        .despawn_recursive();
+                } else {
+                }
+            }
+            _ => (),
+        }
     }
 }
