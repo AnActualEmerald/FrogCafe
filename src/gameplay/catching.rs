@@ -2,11 +2,14 @@ use crate::assets::Sprites;
 use crate::input::MousePos;
 use bevy::prelude::*;
 use heron::prelude::*;
+use std::f32::consts::PI;
 
 use super::{behavior::*, GameState};
 
 #[derive(Component)]
-struct Grabber;
+struct Grabber {
+    grab_point: Vec2,
+}
 
 struct FlyTimer(Timer);
 
@@ -42,10 +45,24 @@ pub fn init(mut commands: Commands, sprites: Res<Sprites>, windows: Res<Windows>
     commands
         .spawn_bundle(SpriteBundle {
             texture: sprites.grabber.clone(),
-            transform: Transform::default().with_scale(Vec3::splat(GRABBER_SCALE)),
+            transform: Transform::from_rotation(Quat::from_rotation_z((PI) / 4.))
+                .with_scale(Vec3::splat(GRABBER_SCALE)),
             ..Default::default()
         })
-        .insert(Grabber);
+        .insert(RigidBody::Sensor)
+        .insert(Grabber {
+            grab_point: Vec2::new(32., 64.),
+        })
+        .with_children(|parent| {
+            parent.spawn_bundle((
+                CollisionShape::Cuboid {
+                    half_extends: Vec3::new(16., 12., 0.),
+                    border_radius: None,
+                },
+                Transform::from_translation(Vec3::new(0., 32. - 6., 0.)),
+                GlobalTransform::default(),
+            ));
+        });
 
     commands.insert_resource(FlyTimer(Timer::from_seconds(3.0, true)));
 

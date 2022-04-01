@@ -2,10 +2,15 @@ use bevy::prelude::*;
 use heron::prelude::*;
 use rand::random;
 
+///if the fly is grabbed or not
+#[derive(Component)]
+pub struct Grabbed;
+
 #[derive(Component)]
 pub struct Fly;
 
-pub fn fly_behavior(mut q: Query<&mut Velocity, With<Fly>>) {
+///act like a fly when it isn't being grabbed
+pub fn fly_behavior(mut q: Query<&mut Velocity, (With<Fly>, Without<Grabbed>)>) {
     let scale = 10.;
 
     for mut tr in q.iter_mut() {

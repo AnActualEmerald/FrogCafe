@@ -35,8 +35,11 @@ fn main() {
             ..Default::default()
         })
         .insert_resource(ClearColor(Color::WHITE))
+        .init_resource::<LoadTime>()
         .add_state(AppState::Loading)
         .add_system_set(SystemSet::on_enter(AppState::Game).with_system(start_game))
+        // .add_system_set(SystemSet::on_update(AppState::Loading).with_system(loading))
+        .add_system_set(SystemSet::on_exit(AppState::Loading).with_system(loaded))
         .add_plugin(assets::AssetPlugin)
         .add_plugin(input::InputPlugin)
         .add_plugin(gameplay::GameplayPlugin)
@@ -44,6 +47,20 @@ fn main() {
         .add_plugin(PhysicsPlugin::default())
         .add_startup_system(setup)
         .run();
+}
+
+#[derive(Default)]
+struct LoadTime(f32);
+
+fn loaded(_load_time: Res<LoadTime>) {
+    info!("Loaded");
+    // info!("Took {}s", load_time.0);
+}
+
+fn _loading(mut load_time: ResMut<LoadTime>, time: Res<Time>) {
+    //do some kind of read here to see how many things need to load
+    load_time.0 += time.delta_seconds();
+    info!("Loading...");
 }
 
 fn setup(mut commands: Commands) {
