@@ -5,6 +5,7 @@ use heron::prelude::*;
 use std::f32::consts::PI;
 
 use super::{behavior::*, GameState};
+use crate::gameplay::{GrabbedEvent, ReleasedEvent};
 
 #[derive(Component, Default)]
 pub struct Grabber {
@@ -151,6 +152,9 @@ pub fn update_set(state: GameState) -> SystemSet {
         .with_system(spawn_flies)
         .with_system(handle_sensors)
         .with_system(grabbed_behavior)
+        .with_system(stunned_behavior)
+        .with_system(grab_fly)
+        .with_system(release_fly)
 }
 
 //despawn relevant entities here
@@ -181,42 +185,71 @@ fn spawn_flies(
     }
 }
 
+//no real good way that I know of to handle reacting to collision events for a single rigidbody
 fn handle_sensors(
-    mut commands: Commands,
     mut col_events: EventReader<CollisionEvent>,
+    mut grabbed_ev: EventWriter<GrabbedEvent>,
+    mut released_ev: EventWriter<ReleasedEvent>,
+
     grabber_q: Query<Entity, With<Grabber>>,
 ) {
     let grabber = grabber_q.single();
     for ev in col_events.iter() {
         match ev {
             CollisionEvent::Started(col_a, col_b) => {
-                if col_a.rigid_body_entity() == grabber {
-                    commands
-                        .entity(col_b.rigid_body_entity())
-                        .insert(super::behavior::Grabbed)
-                        .insert(CollisionLayers::none());
-                } else if col_b.rigid_body_entity() == grabber {
-                    commands
-                        .entity(col_a.rigid_body_entity())
-                        .insert(super::behavior::Grabbed)
-                        .insert(CollisionLayers::none());
-                } else {
+                let ents = vec![col_a.rigid_body_entity(), col_b.rigid_body_entity()];
+                if ents.contains(&grabber) {
+                    grabbed_ev.send(GrabbedEvent(ents[0], ents[1]))
                 }
             }
             CollisionEvent::Stopped(col_a, col_b) => {
-                if col_a.rigid_body_entity() == grabber {
-                    commands
-                        .entity(col_b.rigid_body_entity())
-                        .remove::<super::behavior::Grabbed>()
-                        .remove::<CollisionLayers>();
-                } else if col_b.rigid_body_entity() == grabber {
-                    commands
-                        .entity(col_a.rigid_body_entity())
-                        .remove::<super::behavior::Grabbed>()
-                        .remove::<CollisionLayers>();
-                } else {
+                let ents = vec![col_a.rigid_body_entity(), col_b.rigid_body_entity()];
+                if ents.contains(&grabber) {
+                    released_ev.send(ReleasedEvent(ents[0], ents[1]))
                 }
             }
+        }
+    }
+}
+
+fn grab_fly(
+    mut commands: Commands,
+    mut grabbed_ev: EventReader<GrabbedEvent>,
+    grabber: Query<(), With<Grabber>>,
+) {
+    for e in grabbed_ev.iter() {
+        let GrabbedEvent(l, r) = *e;
+        if grabber.get(l).is_ok() {
+            commands
+                .entity(r)
+                .insert(super::behavior::Grabbed)
+                .insert(CollisionLayers::none());
+        } else if grabber.get(r).is_ok() {
+            commands
+                .entity(l)
+                .insert(super::behavior::Grabbed)
+                .insert(CollisionLayers::none());
+        }
+    }
+}
+
+fn release_fly(
+    mut commands: Commands,
+    mut release_ev: EventReader<ReleasedEvent>,
+    grabber: Query<(), With<Grabber>>,
+) {
+    for e in release_ev.iter() {
+        let ReleasedEvent(l, r) = *e;
+        if grabber.get(l).is_ok() {
+            commands
+                .entity(r)
+                .remove::<super::behavior::Grabbed>()
+                .remove::<CollisionLayers>();
+        } else if grabber.get(r).is_ok() {
+            commands
+                .entity(l)
+                .remove::<super::behavior::Grabbed>()
+                .remove::<CollisionLayers>();
         }
     }
 }

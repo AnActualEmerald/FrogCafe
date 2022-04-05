@@ -7,6 +7,10 @@ use rand::random;
 #[derive(Component)]
 pub struct Grabbed;
 
+///applies gravity
+#[derive(Component)]
+pub struct Stunned;
+
 #[derive(Component)]
 pub struct Fly;
 
@@ -24,6 +28,7 @@ pub fn fly_behavior(mut q: Query<&mut Velocity, (With<Fly>, Without<Grabbed>)>) 
     }
 }
 
+//attach to the grabber when it is being grabbed
 pub fn grabbed_behavior(
     mut q: Query<(&mut Transform, &mut Velocity), With<Grabbed>>,
     grabber_q: Query<(&Grabber, &Transform), Without<Grabbed>>,
@@ -34,5 +39,12 @@ pub fn grabbed_behavior(
         tr.translation.x = grabber.grab_point.x;
         tr.translation.y = grabber.grab_point.y;
         tr.translation += gtr.translation;
+    }
+}
+
+pub fn stunned_behavior(mut q: Query<&mut Velocity, (With<Stunned>, Without<Grabbed>)>) {
+    for mut v in q.iter_mut() {
+        //unclear if this needs to be in pixels/s or m/s
+        v.linear.y -= 9.8;
     }
 }

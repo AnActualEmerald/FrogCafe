@@ -9,11 +9,21 @@ pub enum GameState {
     Catch,
 }
 
+//--events--//
+pub struct GrabbedEvent(Entity, Entity);
+pub struct ReleasedEvent(Entity, Entity);
+pub struct StunnedEvent(Entity, Entity);
+pub struct UnStunnedEvent(Entity, Entity);
+
 pub struct GameplayPlugin;
 
 impl Plugin for GameplayPlugin {
     fn build(&self, app: &mut App) {
         app.add_state(GameState::Waiting)
+            .add_event::<GrabbedEvent>()
+            .add_event::<ReleasedEvent>()
+            .add_event::<StunnedEvent>()
+            .add_event::<UnStunnedEvent>()
             .add_system_set(SystemSet::on_enter(GameState::Catch).with_system(catching::init))
             .add_system_set(catching::update_set(GameState::Catch))
             .add_system_set(catching::exit_set(GameState::Catch));
