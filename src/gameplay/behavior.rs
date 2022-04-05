@@ -1,3 +1,4 @@
+use crate::gameplay::catching::Grabber;
 use bevy::prelude::*;
 use heron::prelude::*;
 use rand::random;
@@ -20,5 +21,18 @@ pub fn fly_behavior(mut q: Query<&mut Velocity, (With<Fly>, Without<Grabbed>)>) 
         tr.linear.x += diff_x * scale;
         tr.linear.y += diff_y * scale;
         tr.linear = tr.linear.clamp(Vec3::splat(-100.), Vec3::splat(100.));
+    }
+}
+
+pub fn grabbed_behavior(
+    mut q: Query<(&mut Transform, &mut Velocity), With<Grabbed>>,
+    grabber_q: Query<(&Grabber, &Transform), Without<Grabbed>>,
+) {
+    let (grabber, gtr) = grabber_q.single();
+    for (mut tr, mut vel) in q.iter_mut() {
+        vel.linear = Vec3::ZERO;
+        tr.translation.x = grabber.grab_point.x;
+        tr.translation.y = grabber.grab_point.y;
+        tr.translation += gtr.translation;
     }
 }

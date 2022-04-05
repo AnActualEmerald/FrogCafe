@@ -9,6 +9,8 @@ pub struct Sprites {
     pub fly: Handle<Image>,
     #[asset(path = "sprites/GrabberPlaceholder.png")]
     pub grabber: Handle<Image>,
+    #[asset(path = "sprites/JarPlaceholder.png")]
+    pub jar: Handle<Image>,
 }
 
 #[derive(AssetCollection)]

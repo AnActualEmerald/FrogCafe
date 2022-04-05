@@ -9,7 +9,7 @@ mod input;
 
 pub const PHYS_SCALE: f32 = 32.0;
 
-const WIN_SCALE: f32 = 1.;
+// const WIN_SCALE: f64 = 1.;
 
 #[allow(unused)]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -28,8 +28,9 @@ fn main() {
         //TODO: Read/write window config to disk
         .insert_resource(WindowDescriptor {
             title: "Toadally Tacos".to_string(),
-            width: 1280.0 * WIN_SCALE,
-            height: 720.0 * WIN_SCALE,
+            width: 1280.0,
+            height: 720.0,
+            // scale_factor_override: Some(WIN_SCALE),
             // mode: WindowMode::SizedFullscreen,
             // cursor_locked: true,
             ..Default::default()
@@ -65,7 +66,7 @@ fn _loading(mut load_time: ResMut<LoadTime>, time: Res<Time>) {
 
 fn setup(mut commands: Commands) {
     let mut ortho_cam = OrthographicCameraBundle::new_2d();
-    ortho_cam.transform.scale = Vec3::splat(1. / WIN_SCALE);
+    ortho_cam.transform.scale = Vec3::splat(1.);
     //might need a UI camera here too
     commands.spawn_bundle(ortho_cam).insert(MainCamera);
 }
