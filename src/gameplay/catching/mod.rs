@@ -4,7 +4,10 @@ use heron::prelude::*;
 use std::f32::consts::PI;
 
 use super::{behavior::*, GameState};
-use crate::gameplay::{GrabbedEvent, ReleasedEvent};
+use crate::{
+    gameplay::{GrabbedEvent, ReleasedEvent},
+    utils::cleanup_ents,
+};
 
 mod input;
 
@@ -13,6 +16,9 @@ pub struct Grabber {
     pub grab_point: Vec2,
     grabbed: Option<Entity>,
 }
+
+#[derive(Component)]
+struct CatchingCleanup;
 
 struct FlyTimer(Timer);
 
@@ -161,7 +167,9 @@ pub fn update_set(state: GameState) -> SystemSet {
 }
 
 //despawn relevant entities here
-pub fn exit_set(state: GameState) -> SystemSet { SystemSet::on_exit(state) }
+pub fn exit_set(state: GameState) -> SystemSet {
+    SystemSet::on_exit(state).with_system(cleanup_ents::<CatchingCleanup>)
+}
 
 //attach grabber to the mouse
 fn grabber_movement(mut grabber_q: Query<&mut Transform, With<Grabber>>, m_pos: Res<MousePos>) {

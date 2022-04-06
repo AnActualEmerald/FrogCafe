@@ -5,6 +5,7 @@ use heron::prelude::PhysicsPlugin;
 mod assets;
 mod gameplay;
 mod input;
+mod utils;
 
 pub const PHYS_SCALE: f32 = 32.0;
 
