@@ -1,5 +1,4 @@
-use crate::assets::Sprites;
-use crate::input::MousePos;
+use crate::{assets::Sprites, input::MousePos};
 use bevy::prelude::*;
 use heron::prelude::*;
 use std::f32::consts::PI;
@@ -38,7 +37,7 @@ impl FlyBundle {
         FlyBundle {
             sprite_bundle: SpriteBundle {
                 texture: sprite,
-                transform: Transform::from_translation(starting_pos.extend(0.)),
+                transform: Transform::from_translation(starting_pos.extend(5.)),
                 ..Default::default()
             },
             fly_marker: Fly,
@@ -125,7 +124,7 @@ pub fn init(mut commands: Commands, sprites: Res<Sprites>) {
         transform: Transform::from_translation(Vec3::new(
             (1280. / 2.) - 45. * 5.,
             -(720. / 2.) + 32. * 5.,
-            0.,
+            10.,
         ))
         .with_scale(Vec3::splat(5.)),
         ..Default::default()
@@ -147,20 +146,18 @@ pub fn init(mut commands: Commands, sprites: Res<Sprites>) {
 //put input handling and actual gameplay stuff here
 pub fn update_set(state: GameState) -> SystemSet {
     SystemSet::on_update(state)
-        .with_system(grabber_movement)
+        .with_system(grabber_movement.label("grabber_move").after("input"))
         .with_system(fly_behavior)
         .with_system(spawn_flies)
         .with_system(handle_sensors)
-        .with_system(grabbed_behavior)
+        .with_system(grabbed_behavior.after("grabber_move"))
         .with_system(stunned_behavior)
         .with_system(grab_fly)
         .with_system(release_fly)
 }
 
 //despawn relevant entities here
-pub fn exit_set(state: GameState) -> SystemSet {
-    SystemSet::on_exit(state)
-}
+pub fn exit_set(state: GameState) -> SystemSet { SystemSet::on_exit(state) }
 
 //attach grabber to the mouse
 fn grabber_movement(mut grabber_q: Query<&mut Transform, With<Grabber>>, m_pos: Res<MousePos>) {

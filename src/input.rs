@@ -8,7 +8,8 @@ pub type MousePos = Vec2;
 
 impl Plugin for InputPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<MousePos>().add_system(track_mouse);
+        app.init_resource::<MousePos>()
+            .add_system(track_mouse.label("input"));
     }
 }
 

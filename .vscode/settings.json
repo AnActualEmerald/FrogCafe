@@ -1,4 +1,5 @@
 {
     "cSpell.words": ["Toadally"],
-    "liveServer.settings.root": "/dist"
+    "liveServer.settings.root": "/dist",
+    "editor.formatOnType": true
 }
