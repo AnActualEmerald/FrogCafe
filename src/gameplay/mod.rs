@@ -10,10 +10,10 @@ pub enum GameState {
 }
 
 //--events--//
-pub struct GrabbedEvent(Entity, Entity);
-pub struct ReleasedEvent(Entity, Entity);
-pub struct StunnedEvent(Entity, Entity);
-pub struct UnStunnedEvent(Entity, Entity);
+pub struct GrabbedEvent(Entity);
+pub struct ReleasedEvent(Entity);
+pub struct StunnedEvent(Entity);
+pub struct UnStunnedEvent(Entity);
 
 pub struct GameplayPlugin;
 

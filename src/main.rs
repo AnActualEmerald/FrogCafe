@@ -1,5 +1,4 @@
-use bevy::prelude::*;
-use bevy::window::WindowMode;
+use bevy::{prelude::*, window::WindowMode};
 use heron::prelude::PhysicsPlugin;
 
 #[allow(unused)]
@@ -64,11 +63,15 @@ fn _loading(mut load_time: ResMut<LoadTime>, time: Res<Time>) {
     info!("Loading...");
 }
 
-fn setup(mut commands: Commands) {
+fn setup(mut commands: Commands, mut windows: ResMut<Windows>) {
     let mut ortho_cam = OrthographicCameraBundle::new_2d();
     ortho_cam.transform.scale = Vec3::splat(1.);
     //might need a UI camera here too
     commands.spawn_bundle(ortho_cam).insert(MainCamera);
+    // windows
+    //     .get_primary_mut()
+    //     .unwrap()
+    //     .set_cursor_lock_mode(true);
 }
 
 fn start_game(mut game_state: ResMut<State<gameplay::GameState>>) {
