@@ -1,8 +1,5 @@
-use bevy::prelude::{Commands, Component, Entity, Query};
+use bevy::prelude::*;
 
-pub fn cleanup_ents<T>(mut commands: Commands, q: Query<Entity, With<T>>)
-where
-    T: Component,
-{
-    q.for_each(|e| commands.entity(e).despawn());
+pub fn cleanup_ents<T: Component>(mut commands: Commands, q: Query<Entity, With<T>>) {
+    q.for_each(|e| commands.entity(e).despawn_recursive());
 }

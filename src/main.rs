@@ -30,6 +30,7 @@ fn main() {
             title: "Toadally Tacos".to_string(),
             width: 1280.0,
             height: 720.0,
+            vsync: true,
             // scale_factor_override: Some(WIN_SCALE),
             // mode: WindowMode::SizedFullscreen,
             // cursor_locked: true,
