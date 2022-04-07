@@ -1,6 +1,6 @@
 use crate::{assets::Sprites, input::MousePos};
 use bevy::prelude::*;
-use heron::prelude::*;
+use heron::{prelude::*, SensorShape};
 use std::f32::consts::PI;
 
 use super::{behavior::*, GameState};
@@ -16,6 +16,9 @@ pub struct Grabber {
     pub grab_point: Vec2,
     grabbed: Option<Entity>,
 }
+
+#[derive(Component)]
+struct Jar;
 
 #[derive(Component)]
 struct CatchingCleanup;
@@ -38,6 +41,7 @@ struct FlyBundle {
     rigid_body: RigidBody,
     collider: CollisionShape,
     vel: Velocity,
+    accel: Acceleration,
 }
 
 impl FlyBundle {
@@ -52,6 +56,7 @@ impl FlyBundle {
             rigid_body: RigidBody::Dynamic,
             collider: CollisionShape::Sphere { radius: rad },
             vel: Velocity::from_linear(starting_vel.extend(0.)),
+            accel: Acceleration::default(),
         }
     }
 }
@@ -128,16 +133,49 @@ pub fn init(mut commands: Commands, sprites: Res<Sprites>) {
         });
 
     //spawn the jar
-    commands.spawn_bundle(SpriteBundle {
-        texture: sprites.jar.clone(),
-        transform: Transform::from_translation(Vec3::new(
-            (1280. / 2.) - 45. * 5.,
-            -(720. / 2.) + 32. * 5.,
-            10.,
-        ))
-        .with_scale(Vec3::splat(5.)),
-        ..Default::default()
-    });
+    commands
+        .spawn_bundle(SpriteBundle {
+            texture: sprites.jar.clone(),
+            transform: Transform::from_translation(Vec3::new(
+                (1280. / 2.) - 45. * 5.,
+                -(720. / 2.) + 32. * 5.,
+                10.,
+            ))
+            .with_scale(Vec3::splat(1.)),
+            ..Default::default()
+        })
+        // .insert(Jar)
+        // .insert(Collisions::default())
+        .insert(RigidBody::Static)
+        .with_children(|children| {
+            children.spawn_bundle((
+                CollisionShape::Cuboid {
+                    half_extends: Vec3::new(2.5, 32. * 5., 0.),
+                    border_radius: None,
+                },
+                Transform::from_translation(Vec3::new(-25. * 5., 0., 0.)),
+                GlobalTransform::default(),
+            ));
+            children.spawn_bundle((
+                CollisionShape::Cuboid {
+                    half_extends: Vec3::new(2.5, 32. * 5., 0.),
+                    border_radius: None,
+                },
+                Transform::from_translation(Vec3::new(25. * 5., 0., 0.)),
+                GlobalTransform::default(),
+            ));
+            children.spawn_bundle((
+                CollisionShape::Cuboid {
+                    half_extends: Vec3::new(25. * 5., 40. * 5., 0.),
+                    border_radius: None,
+                },
+                RigidBody::Sensor,
+                Jar,
+                Collisions::default(),
+                Transform::from_translation(Vec3::new(0., 40., 0.)),
+                GlobalTransform::default(),
+            ));
+        });
 
     let mut flies = Vec::with_capacity(50);
     for _ in 0..flies.capacity() {
@@ -164,6 +202,7 @@ pub fn update_set(state: GameState) -> SystemSet {
         .with_system(grab_fly)
         .with_system(release_fly)
         .with_system(input::mouse_buttons)
+        .with_system(stun_flies)
 }
 
 //despawn relevant entities here
@@ -194,33 +233,6 @@ fn spawn_flies(
     }
 }
 
-//no real good way that I know of to handle reacting to collision events for a single rigidbody
-// fn handle_sensors(
-//     mut col_events: EventReader<CollisionEvent>,
-//     mut grabbed_ev: EventWriter<GrabbedEvent>,
-//     mut released_ev: EventWriter<ReleasedEvent>,
-
-//     grabber_q: Query<Entity, With<Grabber>>,
-// ) {
-//     let grabber = grabber_q.single();
-//     for ev in col_events.iter() {
-//         match ev {
-//             CollisionEvent::Started(col_a, col_b) => {
-//                 let ents = vec![col_a.rigid_body_entity(), col_b.rigid_body_entity()];
-//                 if ents.contains(&grabber) {
-//                     grabbed_ev.send(GrabbedEvent(ents[0], ents[1]))
-//                 }
-//             }
-//             CollisionEvent::Stopped(col_a, col_b) => {
-//                 let ents = vec![col_a.rigid_body_entity(), col_b.rigid_body_entity()];
-//                 if ents.contains(&grabber) {
-//                     released_ev.send(ReleasedEvent(ents[0], ents[1]))
-//                 }
-//             }
-//         }
-//     }
-// }
-
 fn grab_fly(mut commands: Commands, mut grabbed_ev: EventReader<GrabbedEvent>) {
     for GrabbedEvent(r) in grabbed_ev.iter() {
         commands
@@ -237,4 +249,11 @@ fn release_fly(mut commands: Commands, mut release_ev: EventReader<ReleasedEvent
             .remove::<super::behavior::Grabbed>()
             .remove::<CollisionLayers>();
     }
+}
+
+fn stun_flies(mut commands: Commands, q: Query<&Collisions, (With<Jar>)>) {
+    let ents = q.single();
+    ents.iter().for_each(|e| {
+        commands.entity(e).insert(super::behavior::Stunned);
+    });
 }

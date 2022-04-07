@@ -15,7 +15,7 @@ pub struct Stunned;
 pub struct Fly;
 
 ///act like a fly when it isn't being grabbed
-pub fn fly_behavior(mut q: Query<&mut Velocity, (With<Fly>, Without<Grabbed>)>) {
+pub fn fly_behavior(mut q: Query<&mut Velocity, (With<Fly>, Without<Grabbed>, Without<Stunned>)>) {
     let scale = 10.;
 
     for mut tr in q.iter_mut() {
@@ -42,9 +42,9 @@ pub fn grabbed_behavior(
     }
 }
 
-pub fn stunned_behavior(mut q: Query<&mut Velocity, (With<Stunned>, Without<Grabbed>)>) {
-    for mut v in q.iter_mut() {
+pub fn stunned_behavior(mut q: Query<&mut Acceleration, (With<Stunned>, Without<Grabbed>)>) {
+    for mut a in q.iter_mut() {
         //unclear if this needs to be in pixels/s or m/s
-        v.linear.y -= 9.8;
+        a.linear.y = -300.;
     }
 }
