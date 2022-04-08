@@ -7,27 +7,24 @@ pub struct InputPlugin;
 
 //mouse position in world coords
 pub type MousePos = Vec2;
+//mouse delta resource;
+#[derive(Default)]
+pub struct MouseDelta(pub Vec2);
 
 impl Plugin for InputPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<MousePos>()
-            .add_system_to_stage(CoreStage::PreUpdate, track_mouse.label("input"));
-        // .add_system(lock_mouse_to_center.after("input"));
+            .init_resource::<MouseDelta>()
+            .add_system_to_stage(CoreStage::PreUpdate, track_mouse.label("input"))
+            .add_system_to_stage(CoreStage::PreUpdate, mouse_delta);
     }
 }
 
-// fn track_mouse(
-//     mut mouse_pos: ResMut<MousePos>,
-//     mut move_ev: EventReader<MouseMotion>,
-//     time: Res<Time>,
-// ) {
-//     // let mut i = 0;
-//     for e in move_ev.iter() {
-//         // i += 1;
-//         // info!("count  {}", i);
-//         *mouse_pos += e.delta * Vec2::new(MOUSE_SENS, -MOUSE_SENS) * time.delta_seconds();
-//     }
-// }
+fn mouse_delta(mut mouse_d: ResMut<MouseDelta>, mut move_ev: EventReader<MouseMotion>) {
+    for e in move_ev.iter() {
+        mouse_d.0 = e.delta * Vec2::new(1., -1.);
+    }
+}
 
 fn lock_mouse_to_center(mut windows: ResMut<Windows>) {
     let mut wind = windows.get_primary_mut().unwrap();

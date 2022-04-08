@@ -1,4 +1,7 @@
-use crate::{assets::Sprites, input::MousePos};
+use crate::{
+    assets::Sprites,
+    input::{MouseDelta, MousePos},
+};
 use bevy::prelude::*;
 use heron::{prelude::*, SensorShape};
 use std::f32::consts::PI;
@@ -42,6 +45,7 @@ struct FlyBundle {
     collider: CollisionShape,
     vel: Velocity,
     accel: Acceleration,
+    damping: Damping,
 }
 
 impl FlyBundle {
@@ -57,6 +61,10 @@ impl FlyBundle {
             collider: CollisionShape::Sphere { radius: rad },
             vel: Velocity::from_linear(starting_vel.extend(0.)),
             accel: Acceleration::default(),
+            damping: Damping {
+                linear: 3.5,
+                angular: 10.0,
+            },
         }
     }
 }
@@ -242,12 +250,21 @@ fn grab_fly(mut commands: Commands, mut grabbed_ev: EventReader<GrabbedEvent>) {
     }
 }
 
-fn release_fly(mut commands: Commands, mut release_ev: EventReader<ReleasedEvent>) {
-    for ReleasedEvent(r) in release_ev.iter() {
+fn release_fly(
+    mut commands: Commands,
+    mut release_ev: EventReader<ReleasedEvent>,
+    mut q: Query<&mut Velocity, With<Fly>>,
+) {
+    for ReleasedEvent(r, v) in release_ev.iter() {
         commands
             .entity(*r)
             .remove::<super::behavior::Grabbed>()
             .remove::<CollisionLayers>();
+
+        if let Ok(mut vel) = q.get_component_mut::<Velocity>(*r) {
+            vel.linear = v.extend(0.) * 100.;
+            info!("Gave fly velocity {}", vel.linear);
+        }
     }
 }
 

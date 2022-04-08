@@ -11,7 +11,7 @@ pub enum GameState {
 
 //--events--//
 pub struct GrabbedEvent(Entity);
-pub struct ReleasedEvent(Entity);
+pub struct ReleasedEvent(Entity, Vec2);
 pub struct StunnedEvent(Entity);
 pub struct UnStunnedEvent(Entity);
 
