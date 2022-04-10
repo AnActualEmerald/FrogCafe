@@ -14,6 +14,11 @@ use crate::{
 
 mod input;
 
+//--constants--//
+const GRABBER_SCALE: f32 = 2.0;
+pub(super) const FLY_DAMPING: (f32, f32) = (3.5, 10.);
+
+//--components--//
 #[derive(Component, Default)]
 pub struct Grabber {
     pub grab_point: Vec2,
@@ -25,16 +30,6 @@ struct Jar;
 
 #[derive(Component)]
 struct CatchingCleanup;
-
-struct FlyTimer(Timer);
-
-const GRABBER_SCALE: f32 = 2.0;
-
-#[derive(PhysicsLayer)]
-enum PhysLayers {
-    Enabled,
-    Disabled,
-}
 
 #[derive(Bundle)]
 struct FlyBundle {
@@ -62,12 +57,15 @@ impl FlyBundle {
             vel: Velocity::from_linear(starting_vel.extend(0.)),
             accel: Acceleration::default(),
             damping: Damping {
-                linear: 3.5,
-                angular: 10.0,
+                linear: FLY_DAMPING.0,
+                angular: FLY_DAMPING.1,
             },
         }
     }
 }
+
+//--resources--//
+struct FlyTimer(Timer);
 
 pub fn init(mut commands: Commands, sprites: Res<Sprites>) {
     commands
@@ -201,10 +199,9 @@ pub fn init(mut commands: Commands, sprites: Res<Sprites>) {
 //put input handling and actual gameplay stuff here
 pub fn update_set(state: GameState) -> SystemSet {
     SystemSet::on_update(state)
-        .with_system(grabber_movement.label("grabber_move").after("input"))
+        .with_system(grabber_movement.label("grabber_move"))
         .with_system(fly_behavior)
         .with_system(spawn_flies)
-        // .with_system(handle_sensors)
         .with_system(grabbed_behavior.after("grabber_move"))
         .with_system(stunned_behavior)
         .with_system(grab_fly)
@@ -262,8 +259,7 @@ fn release_fly(
             .remove::<CollisionLayers>();
 
         if let Ok(mut vel) = q.get_component_mut::<Velocity>(*r) {
-            vel.linear = v.extend(0.) * 100.;
-            info!("Gave fly velocity {}", vel.linear);
+            vel.linear = (*v * Vec2::new(1., -1.) * FLY_DAMPING.0).extend(0.);
         }
     }
 }

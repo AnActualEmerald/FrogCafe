@@ -1,3 +1,5 @@
+use wasm_bindgen::prelude::*;
+
 use bevy::{prelude::*, window::WindowMode};
 use heron::prelude::PhysicsPlugin;
 
@@ -23,7 +25,8 @@ pub enum AppState {
 #[derive(Component)]
 pub struct MainCamera;
 
-fn main() {
+#[wasm_bindgen]
+pub fn run() {
     App::new()
         //TODO: Read/write window config to disk
         .insert_resource(WindowDescriptor {
@@ -34,13 +37,13 @@ fn main() {
             // scale_factor_override: Some(WIN_SCALE),
             // mode: WindowMode::SizedFullscreen,
             // cursor_locked: true,
+            cursor_visible: false,
             ..Default::default()
         })
         .insert_resource(ClearColor(Color::WHITE))
         .init_resource::<LoadTime>()
         .add_state(AppState::Loading)
         .add_system_set(SystemSet::on_enter(AppState::Game).with_system(start_game))
-        // .add_system_set(SystemSet::on_update(AppState::Loading).with_system(loading))
         .add_system_set(SystemSet::on_exit(AppState::Loading).with_system(loaded))
         .add_plugin(assets::AssetPlugin)
         .add_plugin(input::InputPlugin)
@@ -55,7 +58,7 @@ fn main() {
 struct LoadTime(f32);
 
 fn loaded(_load_time: Res<LoadTime>) {
-    info!("Loaded");
+    debug!("Loaded");
     // info!("Took {}s", load_time.0);
 }
 
@@ -66,6 +69,7 @@ fn _loading(mut load_time: ResMut<LoadTime>, time: Res<Time>) {
 }
 
 fn setup(mut commands: Commands, mut windows: ResMut<Windows>) {
+    debug!("pretty sure this doesn't work");
     let mut ortho_cam = OrthographicCameraBundle::new_2d();
     ortho_cam.transform.scale = Vec3::splat(1.);
     //might need a UI camera here too
