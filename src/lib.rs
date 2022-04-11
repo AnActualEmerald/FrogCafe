@@ -11,7 +11,11 @@ mod utils;
 
 pub const PHYS_SCALE: f32 = 32.0;
 
-// const WIN_SCALE: f64 = 1.;
+#[cfg(not(target_family = "wasm"))]
+const WIN_SCALE: f32 = 1.;
+
+#[cfg(target_family = "wasm")]
+const WIN_SCALE: f32 = 0.5;
 
 #[allow(unused)]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -25,14 +29,25 @@ pub enum AppState {
 #[derive(Component)]
 pub struct MainCamera;
 
+#[cfg(target_family = "wasm")]
+#[wasm_bindgen]
+extern "C" {
+    fn getWindowWidth() -> f32;
+}
+
 #[wasm_bindgen]
 pub fn run() {
+    let scale = WIN_SCALE;
+    // #[cfg(target = "wasm32-unknown-unknown")]
+    // {
+    //     scale = (getWindowWidth() / 1280f32).clamp(0., 1.);
+    // }
     App::new()
         //TODO: Read/write window config to disk
         .insert_resource(WindowDescriptor {
             title: "Toadally Tacos".to_string(),
-            width: 1280.0,
-            height: 720.0,
+            width: 1280.0 * scale,
+            height: 720.0 * scale,
             vsync: true,
             // scale_factor_override: Some(WIN_SCALE),
             // mode: WindowMode::SizedFullscreen,
@@ -69,9 +84,8 @@ fn _loading(mut load_time: ResMut<LoadTime>, time: Res<Time>) {
 }
 
 fn setup(mut commands: Commands, mut windows: ResMut<Windows>) {
-    debug!("pretty sure this doesn't work");
     let mut ortho_cam = OrthographicCameraBundle::new_2d();
-    ortho_cam.transform.scale = Vec3::splat(1.);
+    ortho_cam.transform.scale = Vec3::splat(1. / WIN_SCALE);
     //might need a UI camera here too
     commands.spawn_bundle(ortho_cam).insert(MainCamera);
     // windows

@@ -1,0 +1,20 @@
+[env]
+DEPLOY_DIR="../../vue/greenvue/public/wasm/"
+DIST="dist"
+
+
+[tasks.deploy]
+script= "cp -r ${DIST}/* ${DEPLOY_DIR}"
+dependencies = ["build-web", "clean-deploy"]
+
+[tasks.clean-deploy]
+script= "rm -rf ${DEPLOY_DIR}/*"
+
+[tasks.build-web]
+args = ["${DIST}/index.html", "${DIST}/game.html"]
+command = "mv"
+dependencies = ["trunk-build"]
+
+[tasks.trunk-build]
+args = ["build", "--release"]
+command = "trunk"
